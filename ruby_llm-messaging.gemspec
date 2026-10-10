@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Connect RubyLLM chats to messaging apps such as Microsoft Teams."
   spec.description = "Answers messages in Microsoft Teams and other messaging apps with a RubyLLM chat. " \
                      "Streams replies, keeps conversation history per thread and uses ChatSDK for the platform work."
+  spec.homepage = "https://github.com/niciliketo/ruby_llm-messaging"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
 
@@ -19,6 +20,7 @@ Gem::Specification.new do |spec|
   # no one can publish a new version without multi-factor authentication.
   # See: https://guides.rubygems.org/mfa-requirement-opt-in/
   spec.metadata["rubygems_mfa_required"] = "true"
+  spec.metadata["source_code_uri"] = spec.homepage
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
