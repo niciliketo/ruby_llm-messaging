@@ -19,3 +19,7 @@ Metrics/BlockLength:
 
 Layout/LineLength:
   Max: 120
+
+# Keyword arguments with defaults are self-documenting; count positional ones only.
+Metrics/ParameterLists:
+  CountKeywordArgs: false

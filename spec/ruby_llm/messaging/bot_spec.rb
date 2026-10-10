@@ -59,4 +59,61 @@ RSpec.describe RubyLLM::Messaging::Bot do
     expect(bot.store).to be_a(RubyLLM::Messaging::Stores::ChatSDKState)
     expect(bot.store.load("test:C1:T1").size).to eq(2)
   end
+
+  describe "with a custom handler" do
+    subject(:bot) do
+      described_class.new(user_name: "helper", adapters: { test: fake_adapter }, config: config,
+                          handler: ->(adapter) { handled << adapter.incoming })
+    end
+
+    let(:handled) { [] }
+
+    it "passes each message to the handler instead of the responder" do
+      deliver(ChatSDK::Events::DirectMessage, "Hello bot", id: "m1")
+
+      expect(handled.map(&:text)).to eq(["Hello bot"])
+      expect(chats).to be_empty
+    end
+  end
+
+  describe "#outbound" do
+    it "sends to a conversation from its reference" do
+      deliver(ChatSDK::Events::DirectMessage, "Hi", id: "m1")
+      fake_adapter.reset!
+
+      bot.outbound(platform: :test, channel_id: "C1", thread_id: "T1").post("Later")
+
+      expect(fake_adapter.posted_messages.last[:message].text).to eq("Later")
+    end
+  end
+
+  describe "#webhooks" do
+    # Reads the body twice, as ChatSDK's adapters do.
+    let(:adapter_class) do
+      Class.new(ChatSDK::Testing::FakeAdapter) do
+        attr_reader :bodies
+
+        def parse_events(rack_request)
+          (@bodies ||= []) << rack_request.body.read
+          rack_request.body.rewind
+          @bodies << rack_request.body.read
+          []
+        end
+      end
+    end
+    let(:adapter) { adapter_class.new }
+    let(:bot) { described_class.new(user_name: "helper", adapters: { test: adapter }, config: config) }
+
+    it "makes the request body rewindable under Rack::Lint" do
+      app = Rack::Lint.new(bot.webhooks[:test])
+      response = Rack::MockRequest.new(app).post("/", input: "{}", "CONTENT_TYPE" => "application/json")
+
+      expect(response.status).to eq(200)
+      expect(adapter.bodies).to eq(["{}", "{}"])
+    end
+
+    it "returns the same endpoint each time" do
+      expect(bot.webhooks[:test]).to be(bot.webhooks[:test])
+    end
+  end
 end

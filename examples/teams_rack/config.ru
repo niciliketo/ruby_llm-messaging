@@ -8,7 +8,7 @@
 # Set the Azure Bot messaging endpoint to https://<your-host>/api/messages.
 
 require "ruby_llm/messaging"
-require "chat_sdk/teams"
+require "ruby_llm/messaging/teams"
 
 RubyLLM.configure do |config|
   config.anthropic_api_key = ENV.fetch("ANTHROPIC_API_KEY", nil)
@@ -28,10 +28,10 @@ state =
     ChatSDK::State::Memory.new
   end
 
-bot = RubyLLM::Messaging::Bot.new(
-  user_name: "assistant",
-  adapters: { teams: ChatSDK::Teams::Adapter.new },
-  state: state
-)
+teams = ChatSDK::Teams::Adapter.new
+# Single-tenant Azure Bots (the default for new bots) must get tokens from their own tenant.
+RubyLLM::Messaging::Teams.single_tenant!(teams, tenant_id: ENV.fetch("TEAMS_TENANT_ID")) if ENV["TEAMS_TENANT_ID"]
+
+bot = RubyLLM::Messaging::Bot.new(user_name: "assistant", adapters: { teams: teams }, state: state)
 
 map("/api/messages") { run bot.webhooks[:teams] }

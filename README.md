@@ -20,7 +20,7 @@ gem "chat_sdk-state-redis"  # history and subscriptions that survive restarts
 
 ```ruby
 require "ruby_llm/messaging"
-require "chat_sdk/teams"
+require "ruby_llm/messaging/teams"
 require "chat_sdk/state/redis"
 
 RubyLLM.configure { |c| c.anthropic_api_key = ENV["ANTHROPIC_API_KEY"] }
@@ -31,9 +31,12 @@ RubyLLM::Messaging.configure do |config|
   config.tools = [LookupOrder]   # any RubyLLM::Tool
 end
 
+teams = ChatSDK::Teams::Adapter.new   # reads TEAMS_APP_ID and TEAMS_APP_PASSWORD
+RubyLLM::Messaging::Teams.single_tenant!(teams, tenant_id: ENV["TEAMS_TENANT_ID"])
+
 bot = RubyLLM::Messaging::Bot.new(
   user_name: "helpdesk",
-  adapters: { teams: ChatSDK::Teams::Adapter.new },   # reads TEAMS_APP_ID, TEAMS_APP_PASSWORD, TEAMS_TENANT_ID
+  adapters: { teams: teams },
   state: ChatSDK::State::Redis.new(url: ENV["REDIS_URL"])
 )
 ```
@@ -49,6 +52,8 @@ mount LLM_BOT.webhooks[:teams], at: "/api/messages"
 ```
 
 See `examples/teams_rack/config.ru` and `examples/rails/README.md` for complete files.
+
+`single_tenant!` is needed for Single Tenant Azure Bots, which is what Azure creates today. ChatSDK 1.1 always asks the shared `botframework.com` tenant for tokens, so without it the bot receives messages but cannot reply. Skip it for an older multi-tenant bot.
 
 ### Teams setup
 
@@ -97,6 +102,26 @@ end
 
 Pass a separate `RubyLLM::Messaging::Configuration` to `Bot.new(config:)` to run bots with different settings in one process.
 
+## Replying from your own code
+
+The built-in responder answers inside the webhook request. To produce replies elsewhere, for example in a background job that uses your app's own chat history and tools, pass a `handler`. It receives an adapter for each message. Save `incoming.reference`, return quickly, and reply later with `bot.outbound`:
+
+```ruby
+bot = RubyLLM::Messaging::Bot.new(
+  user_name: "assistant",
+  adapters: { teams: teams },
+  state: state,
+  handler: ->(adapter) { AnswerJob.perform_later(adapter.incoming.text, adapter.incoming.reference) }
+)
+
+# In the job:
+outbound = bot.outbound(reference)   # a Hash; JSON round trips are fine
+message_id = outbound.post("Working on it...")
+outbound.edit(message_id, answer) if outbound.supports_edit?
+```
+
+For Teams, the reference also holds `tenant_id`, `conversation_type` (`"personal"` for 1:1 chats) and `author_platform_id` (the user's Microsoft Entra object id). Use these to decide who the sender is in your app.
+
 ## Adding a platform
 
 Any ChatSDK adapter works without changes, for example `chat_sdk-slack` or `chat_sdk-whatsapp`. Add it to the `adapters:` hash and mount its webhook. For a platform that ChatSDK does not support, see [ADAPTERS.md](ADAPTERS.md).
@@ -104,6 +129,7 @@ Any ChatSDK adapter works without changes, for example `chat_sdk-slack` or `chat
 ## Known limitations
 
 - ChatSDK Ruby is in beta. This gem pins `~> 1.1`. Its own adapter interface (`Adapters::Base`) keeps that dependency in one place.
+- The gem works around three ChatSDK 1.1 problems: the shared-tenant token URL (`Teams.single_tenant!`), request bodies that are not rewindable under Rack 3 (`Bot#webhooks` adds `Rack::RewindableInput::Middleware`), and `on_subscribed_message` firing in threads the bot does not follow.
 - History keeps user and assistant text only. Tool calls and tool results are not replayed in later turns.
 - Tools that need human approval (`chat.waiting?`) are not supported yet. The bot posts whatever text the model returned.
 - Attachments in incoming messages are not sent to the model yet.

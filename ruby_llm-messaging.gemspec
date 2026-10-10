@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "chat_sdk", "~> 1.1"
+  spec.add_dependency "rack", ">= 3.0"
   spec.add_dependency "ruby_llm", ">= 1.6", "< 3"
 
   # For more information and examples about making a new gem, check out our

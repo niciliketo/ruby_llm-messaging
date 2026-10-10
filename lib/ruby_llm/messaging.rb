@@ -12,6 +12,7 @@ require_relative "messaging/adapters/base"
 require_relative "messaging/adapters/chat_sdk"
 require_relative "messaging/conversation"
 require_relative "messaging/responder"
+require_relative "messaging/outbound"
 require_relative "messaging/bot"
 
 module RubyLLM

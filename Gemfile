@@ -14,5 +14,6 @@ gem "rubocop", "~> 1.21"
 
 # Platform adapters are optional at runtime; the specs and examples use Teams.
 gem "chat_sdk-teams", "~> 1.1"
+gem "puma", "~> 7.0"
 gem "rack", "~> 3.1"
 gem "rackup", "~> 2.2"

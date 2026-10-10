@@ -2,6 +2,8 @@
 
 require "ruby_llm/messaging"
 require "chat_sdk/testing"
+require "rack/lint"
+require "rack/mock"
 
 Dir[File.join(__dir__, "support/**/*.rb")].each { |file| require file }
 

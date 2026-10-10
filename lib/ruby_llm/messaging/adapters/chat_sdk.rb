@@ -25,6 +25,7 @@ module RubyLLM
             author_name: message.author&.name,
             platform: message.platform,
             conversation_key: conversation_key,
+            reference: reference,
             raw: message
           )
         end
@@ -45,10 +46,28 @@ module RubyLLM
           thread.adapter.start_typing(channel_id: thread.channel_id, thread_id: thread.id)
         end
 
+        # Identifies the conversation for Bot#outbound. Teams fields are added when the
+        # platform sends them: the service URL replies must go to, the Microsoft Entra
+        # tenant, the conversation type ("personal", "groupChat", "channel") and the
+        # author's Entra object id.
+        def reference
+          { platform: thread.adapter.name, channel_id: thread.channel_id, thread_id: thread.id }
+            .merge(teams_reference(message.raw.is_a?(Hash) ? message.raw : {}))
+        end
+
         private
 
         def conversation_key
           "#{thread.adapter.name}:#{thread.channel_id}:#{thread.id}"
+        end
+
+        def teams_reference(activity)
+          {
+            service_url: activity["serviceUrl"],
+            tenant_id: activity.dig("conversation", "tenantId") || activity.dig("channelData", "tenant", "id"),
+            conversation_type: activity.dig("conversation", "conversationType"),
+            author_platform_id: activity.dig("from", "aadObjectId")
+          }.compact
         end
 
         def clean_text(text)
