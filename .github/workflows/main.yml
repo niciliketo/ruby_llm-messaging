@@ -17,12 +17,20 @@ jobs:
     strategy:
       matrix:
         ruby:
+          - '3.2'
+          - '3.3'
+          - '3.4'
           - '4.0.3'
 
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      # Gemfile.lock is resolved on Ruby 4.0. Older Rubies resolve their own
+      # versions, the same way a user's app does.
+      - name: Remove lockfile on older Rubies
+        if: matrix.ruby != '4.0.3'
+        run: rm Gemfile.lock
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
