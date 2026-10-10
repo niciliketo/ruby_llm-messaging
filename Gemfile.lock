@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby_llm-messaging (0.2.0)
+    ruby_llm-messaging (0.2.1)
       chat_sdk (~> 1.1)
       rack (>= 3.0)
       ruby_llm (>= 1.6, < 3)
@@ -206,7 +206,7 @@ CHECKSUMS
   rubocop-ast (1.50.0) sha256=b9ca88300da0803ee222ad20cdb30494c0a784eed06fdc35d254b06d662788db
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby_llm (2.1.0) sha256=041e73588758172e37b2883584b3bbca6fbddec2f273cdbdfa5f2b4f2f9a053e
-  ruby_llm-messaging (0.2.0)
+  ruby_llm-messaging (0.2.1)
   schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
   timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f

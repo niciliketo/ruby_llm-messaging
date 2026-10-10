@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Keep ChatSDK's RSpec helpers out of eager loading, so Rails apps boot in production (`config.eager_load = true`).
+
 ## 0.2.0
 
 - `Bot.new(handler:)` lets the app handle each message itself, for example by queuing a background job.

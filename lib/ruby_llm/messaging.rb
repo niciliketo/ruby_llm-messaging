@@ -3,6 +3,13 @@
 require "ruby_llm"
 require "chat_sdk"
 
+# ChatSDK's RSpec helpers (ChatSDK::Testing) reference RSpec, so eager loading them fails outside a test run.
+# Rails eager loads every Zeitwerk loader in production (Zeitwerk::Loader.eager_load_all), so keep them out.
+# They still load on demand, e.g. require "chat_sdk/testing" in a spec helper.
+ChatSDK.loader.dirs.each do |root|
+  ChatSDK.loader.do_not_eager_load(File.join(root, "chat_sdk", "testing"), File.join(root, "chat_sdk", "testing.rb"))
+end
+
 require_relative "messaging/version"
 require_relative "messaging/configuration"
 require_relative "messaging/incoming"
